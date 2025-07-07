@@ -1,0 +1,37 @@
+% example.tex
+\documentclass{article}
+\usepackage{amsthm}
+
+\begin{document}
+
+\title{An Example Document Using Bib\TeX}
+\author{Jane Doe}
+\date{\today}
+\maketitle
+
+\section{Introduction}
+
+This is a minimal example of a \LaTeX{} document that uses Bib\TeX{} for references.
+We will cite Knuth’s classic work on \TeX{} \cite{knuth1984texbook} and Lamport’s guide to \LaTeX{} \cite{lamport1994latex}.
+
+\section{A Theorem Example}
+
+\begin{theorem}[Energy–Mass Equivalence]
+In physics, mass and energy are related by the equation
+\[ E = mc^2, \]
+where $E$ is energy, $m$ is mass, and $c$ is the speed of light.
+\end{theorem}
+
+\section{Conclusion}
+
+This document shows how to:
+\begin{itemize}
+  \item Include inline math: e.g.\ $a^2 + b^2 = c^2$.
+  \item Use a theorem environment (from the {\tt amsthm} package).
+  \item Generate a bibliography with Bib\TeX{}.
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
