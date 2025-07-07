@@ -1,0 +1,84 @@
+name: Build LaTeX
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.tex'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: example.tex
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PDF
+          path: example.pdf
+
+      - name: Upload PDF to Nextcloud
+        if: false && success() && github.event_name == 'push' # Disabled due to missing creds in template repo
+        env:
+          NEXTCLOUD_USER: ${{ secrets.NEXTCLOUD_USER }}
+          NEXTCLOUD_PASS: ${{ secrets.NEXTCLOUD_PASS }}
+          NEXTCLOUD_URL: ${{ vars.NEXTCLOUD_URL }}
+        run: |
+          curl -T example.pdf -u "$NEXTCLOUD_USER:$NEXTCLOUD_PASS" "${NEXTCLOUD_URL}/example.pdf"
+
+      - name: Generate a safe timestamp
+        id: vars
+        run: |
+          # e.g. "20250707T123456Z"
+          echo "TS=$(date -u +'%Y%m%dT%H%M%SZ')" >> $GITHUB_ENV
+
+      - name: Create annotated tag
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag v${{ env.TS }}
+          git push origin v${{ env.TS }}
+
+      - name: Create GitHub Release
+        id: create_release                     # ← add this!
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name:      v${{ env.TS }}
+          release_name:  "LaTeX at ${{ env.TS }}"
+          draft:         false
+          prerelease:    false
+      
+      - name: Archive source code
+        run: |
+          zip -r source-code.zip . -x "*.git*" "example.pdf"
+      
+      - name: Upload PDF to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url:         ${{ steps.create_release.outputs.upload_url }}
+          asset_path:         example.pdf
+          asset_name:         example.pdf
+          asset_content_type: application/pdf
+      
+      - name: Upload Source to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url:         ${{ steps.create_release.outputs.upload_url }}
+          asset_path:         source-code.zip
+          asset_name:         source-code.zip
+          asset_content_type: application/zip
